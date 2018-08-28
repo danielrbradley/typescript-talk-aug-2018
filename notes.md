@@ -1,138 +1,102 @@
-
-Project setup:
+## 1: Project setup
 
 1. Create new directory: `mkdir foo` & `cd foo`
 2. Initialize serverless project:`serverless create --template aws-nodejs-typescript`
-3. Edit service name in `serverless.yml`
-4. Edit package to make private.
-5. Restore pacakges: `yarn`
-6. `yarn add alexa-ts`
+3. Edit `service.name` + `handler` in `serverless.yml`
+4. Restore pacakges: `yarn`
+5. `yarn add ask-sdk`
 
 First code:
-1. import alexa-ts
-2. export hello lambda handler
-    ```
-    export const hello = Lambda.handler(() =>
-      response({
-        Say: { Text: `Hello, from type script!` }
-      })
-    );
-    ```
+```typescript
+import * as Ask from "ask-sdk";
 
-Testing:
-1. `yarn add jest ts-jest @types/jest -D`
-2. Add jest config:
-    ```
-    "jest": {
-      "transform": {
-        "^.+\\.tsx?$": "ts-jest"
-      },
-      "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
-      "testEnvironment": "node",
-      "moduleFileExtensions": [
-        "ts",
-        "tsx",
-        "js",
-        "jsx",
-        "json",
-        "node"
-      ]
-    }
-    ```
-3. Create `handler.test.ts`
-4. Add basic launch test
-    ```
-    test("launch response", async () => {
-      const session = new Session(hello);
-      const launchResponse = await session.LaunchSkill();
-      expect(launchResponse.response.outputSpeech).toEqual({
-        text: "Hello, from type script!",
-        type: "PlainText"
-      });
-    });
-    ```
-5. Show that all responses are the same.
-
-Adding the router:
-1. Use `Lambda.router`:
-2. Set default state as empty
-3. Add router step - move hello handler into Launch
-4. Add custom "Name" handler
-    ```
-    Custom: [
-      [
-        "Name",
-        (state, slots, request, next) =>
-          response({
-            Say: { Text: `Hi ${slots.get("Name")}, my name is Dan` },
-            EndSession: true
-          })
-      ]
-    ]
-    ```
-5. Update test to ask follow up question.
-
-Pipes:
-1. Put router inside pipe: `(body, next) => next(body)`
-2. Add tracing pipe.
-
-Deploy Lambda:
-
-1. Set function event to be: `- alexaSkill: amzn1.ask.skill.xx-xx-xx-xx-xx`
-1. Serverless deploy...
-
-Configure Skill:
-
-https://serverless.com/blog/how-to-manage-your-alexa-skills-with-serverless/
-1. Set up app security profile.
-2. `yarn add serverless-alexa-skills -D`
-3. Add `serverless-alexa-skills` to serverless plugins
-4. Add custom section for alexa:
+export const handler = Ask.SkillBuilders.custom().lambda()
 ```
+
+Add launch handler:
+```typescript
+.addRequestHandlers({
+  canHandle: (handlerInput) => {
+    return true
+  },
+  handle: (handlerInput) => {
+    return handlerInput.responseBuilder.speak("Hello world").getResponse();
+  }
+})
+```
+
+Configure TypeScript:
+```json
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+```
+
+## 2: Deployment
+
+Setup Alexa plugin:
+1. `yarn add -D https://github.com/danielrbradley/serverless-alexa-skills.git#3d83ed0`
+2. Add `serverless-alexa-skills` to serverless plugins
+3. Get vendor ID: https://developer.amazon.com/mycid.html
+4. Add custom section for alexa:
+```yaml
 custom:
   alexa:
     vendorId: ${env:AMAZON_VENDOR_ID}
-    clientId: ${env:AMAZON_CLIENT_ID}
-    clientSecret: ${env:AMAZON_CLIENT_SECRET}
 ```
-5. Setup env variables:
-```
-set -Ux AMAZON_VENDOR_ID M2MP3B84J1FVM2
-set -Ux AMAZON_CLIENT_ID amzn1.application-oa2-client.a1a6a3c68c054e02b2a1053d51784384
-set -Ux AMAZON_CLIENT_SECRET 1f4805015588cb05a22ea202ccb8d4518e243a30542be74da995f234e5eecbe2
-```
-6. `sls alexa auth`
-7. `sls alexa create --name hello-world --locale en-GB --type custom`
-8. Add skills section to custom/alexa block:
+5. `sls alexa auth`
+6. `sls alexa create --name "TypeScript demo" --locale en-GB --type custom`
+
+Deploy Lambda:
+
+1. Add event: ` - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx-xx`
+2. Set `provider.profile` to `personal`
+3. `sls deploy`
+
+__while waiting... talk about gotyas:__
+- Have to deploy lambda before configuring skill.
+- Have to create skill before creating lambda.
+- Auth token only lasts 1 hour
+
+Configure Skill:
+
+1. Add skills section to custom/alexa block:
 ```
     skills:
-      - id: ${env:ALEXA_SKILL_ID}
+      - id: amzn1.ask.skill.xx-xx-xx-xx-xx
         manifest:
           publishingInformation:
             locales:
-              en-US:
-                name: sample
+              en-GB:
+                name: TypeScript demo
           apis:
             custom:
               endpoint:
                 uri: arn:aws:lambda:region:account-id:function:function-name
           manifestVersion: '1.0'
-```
-9. Push update: `sls alexa update` (check with `sls alexa manifest`)
-10. Add models to the skill:
-```
         models:
           en-GB:
             interactionModel:
               languageModel:
-                invocationName: hello world
+                invocationName: typescript demo
                 intents:
-                  - name: AMAZON.CancelIntent
-                  - name: AMAZON.HelpIntent
-                  - name: AMAZON.StopIntent
                   - name: HelloWorldIntent
                     samples:
                      - 'hello'
 ```
+2. Push update: `sls alexa update` (check with `sls alexa manifests`)
+3. Build alexa interaction models: `sls alexa build` (check with `sls alexa models`)
 
-11. Build alexa interaction models: `sls alexa build` (check with `sls alexa models`)
+## More bits
+- State - use helper functions
+- Slots
+- Guessing game
+
+## Final thoughts
+- To Webpack or not
+- Use Serverless variables for manifest and models.
