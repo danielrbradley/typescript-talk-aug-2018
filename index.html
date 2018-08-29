@@ -82,20 +82,52 @@
 
         <section>
           <h2>Summary of a conversation</h2>
-          <ol>
-            <li>Spoken words converted to text</li>
-            <li>Text compared to examples to find intent</li>
-            <li>Request sent to handler with slots</li>
-            <li>Handler returns text to reply</li>
-            <li>Text converted to audio to play</li>
-          </ol>
+          <p>
+            <svg class="fragment" width="300" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+              viewBox="0 20 100 60">
+              <rect x="24.8" y="44.3" width="3.3" height="9.8" stroke="white" fill="white" />
+              <rect x="71" y="44.3" width="3.3" height="9.8" stroke="white" fill="white" />
+              <rect x="57.8" y="44.3" width="3.3" height="9.8" stroke="white" fill="white" />
+              <rect x="44.5" y="44.3" width="3.3" height="9.8" stroke="white" fill="white" />
+              <rect x="31.4" y="39.3" width="3.3" height="19.7" stroke="white" fill="white" />
+              <rect x="51.1" y="39.3" width="3.3" height="19.7" stroke="white" fill="white" />
+              <rect x="64.5" y="34.4" width="3.3" height="29.5" stroke="white" fill="white" />
+              <rect x="38" y="29.5" width="3.3" height="39.3" stroke="white" fill="white" />
+              <rect x="18.1" y="47.5" width="3.3" height="3.3" stroke="white" fill="white" />
+              <rect x="77.5" y="47.5" width="3.3" height="3.3" stroke="white" fill="white" />
+            </svg>
+            <svg class="fragment" xmlns="http://www.w3.org/2000/svg" width="300" height="140" viewBox="0 0 99 99" x="0px" y="0px">
+              <path stroke="white" fill="white" d="M43.53,55.35a19,19,0,0,1,1.22-3.28h-15V40.86H62.65a20.41,20.41,0,0,1,3.42.29V24.47H26.47V67.09H44a19.27,19.27,0,0,1-.85-3.28H29.77V55.35ZM29.77,27.75h33v9.84h-33Z"
+              />
+              <path stroke="white" fill="white" d="M76.41,69.56A16.3,16.3,0,0,0,74.31,49,16.55,16.55,0,0,0,51,49a16.28,16.28,0,0,0,0,23.15A16.57,16.57,0,0,0,71.74,74.2l9.58,9.51L86,79.08ZM72,69.78a13.24,13.24,0,0,1-18.62,0,13,13,0,0,1,0-18.49,13.24,13.24,0,0,1,18.62,0A13,13,0,0,1,72,69.78Z"
+              />
+            </svg>
+          </p>
+          <p>
+            <img src="aws-lambda.png" class="plain fragment" style="background: none; width: 100px; height: 100px; padding: 0 100px;" />
+            <svg class="fragment" width="300" height="160" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="30 30 40 40">
+              <path stroke="white" d="M66,55.6v-13h0c-0.5-3.3-10.2-4.2-16-4.2c-5.8,0-15.5,0.9-16,4.2h0v0.2c0,0,0,0,0,0h0v12.3l0,0.4c0,3.9,8,6,16,6   C58,61.6,66,59.6,66,55.6L66,55.6z M36,42.9c0.4-0.9,5.5-2.5,14-2.5c8.5,0,13.7,1.6,14,2.5h0v0.7c-1.5,1.1-6.7,2.3-14,2.3   c-7.3,0-12.4-1.2-14-2.3V42.9z M36,44.7c2.6,1.4,8.3,2.2,14,2.2c5.7,0,11.4-0.7,14-2.2v0.6c-1.5,1.1-6.7,2.3-14,2.3   c-7.3,0-12.4-1.2-14-2.3V44.7z M36,46.4c2.6,1.4,8.3,2.2,14,2.2c5.7,0,11.4-0.7,14-2.2v3.3c-1.5,1.1-6.6,2.3-14,2.3   c-7.3,0-12.4-1.2-14-2.3V46.4z M64,55.6c0,1.6-5.5,4-14,4c-8.5,0-14-2.4-14-4v0h0v-4.8c2.6,1.4,8.3,2.2,14,2.2   c5.7,0,11.4-0.7,14-2.2v4.4L64,55.6L64,55.6z"
+              />
+              <ellipse stroke="white" cx="41.9" cy="42.9" rx="2.3" ry="0.5" />
+              <ellipse stroke="white" cx="58.1" cy="42.9" rx="2.3" ry="0.5" />
+            </svg>
+          </p>
+          <aside class="notes">
+              <ol>
+                  <li>Spoken words converted to text</li>
+                  <li>Text compared to examples to find intent</li>
+                  <li>Request sent to handler with slots</li>
+                  <li>Handler returns text to reply</li>
+                  <li>Text converted to audio to play</li>
+                </ol>
+          </aside>
         </section>
 
         <section>
           <h2>Types of requests</h2>
           <div class="fragment">
             <p>LaunchRequest</p>
-            <blockquote>"Alexa start
+            <blockquote>"Alexa open
               <code style="color: greenyellow">InvocationName</code>"</blockquote>
           </div>
           <div class="fragment">
