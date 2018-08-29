@@ -50,18 +50,20 @@ custom:
     vendorId: ${env:AMAZON_VENDOR_ID}
 ```
 5. `sls alexa auth`
+
+__while waiting... talk about gotyas:__
+- Have to deploy lambda before configuring skill.
+- Have to create skill before creating lambda.
+- Auth token only lasts 1 hour
+
 6. `sls alexa create --name "TypeScript demo" --locale en-GB --type custom`
 
 Deploy Lambda:
 
 1. Add event: ` - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx-xx`
 2. Set `provider.profile` to `personal`
+3. Set region
 3. `sls deploy`
-
-__while waiting... talk about gotyas:__
-- Have to deploy lambda before configuring skill.
-- Have to create skill before creating lambda.
-- Auth token only lasts 1 hour
 
 Configure Skill:
 
@@ -98,6 +100,30 @@ Configure Skill:
 - Dialog flow
 
 ## Guessing Game
+
+models.yml
+```yml
+en-GB:
+  interactionModel:
+    languageModel:
+      invocationName: guessing game
+      intents:
+        - name: AMAZON.HelpIntent
+        - name: AMAZON.StopIntent
+        - name: GuessIntent
+          slots:
+            - name: Guess
+              type: AMAZON.NUMBER
+          samples:
+            - 'I guess {Guess}'
+            - 'is it {Guess}'
+            - 'what about {Guess}'
+            - 'my guess is {Guess}'
+            - 'if the number is {Guess}'
+            - '{Guess}'
+        - name: AMAZON.YesIntent
+        - name: AMAZON.NoIntent
+```
 
 ```typescript
 import * as Ask from "ask-sdk";
@@ -245,56 +271,41 @@ function parseGuessSlot(handlerInput: Ask.HandlerInput): number | null {
   return parseInt(guessInput.value, 10);
 }
 
-function checkGuess(
-  handlerInput: Ask.HandlerInput,
-  state: GuessingState
-): { response: Response; state: State } {
+function checkGuess(handlerInput: Ask.HandlerInput, state: GuessingState) {
   const guess = parseGuessSlot(handlerInput);
   const responseBuilder = handlerInput.responseBuilder;
   if (guess === null) {
-    return {
-      state,
-      response: responseBuilder
-        .speak("Sorry, I couldn't tell what number you said.")
-        .reprompt(`Try saying "Is it 50"`)
-        .getResponse()
-    };
+    return responseBuilder
+      .speak("Sorry, I couldn't tell what number you said.")
+      .reprompt(`Try saying "Is it 50"`)
+      .getResponse();
   }
   if (guess < state.Target) {
-    return {
-      state: nextGuess(state),
-      response: responseBuilder
-        .speak(`Is it ${guess}? Nope, too low! Guess again.`)
-        .reprompt(`${guess} was too low, what's your next guess?`)
-        .getResponse()
-    };
+    setState(handlerInput, nextGuess(state));
+    return responseBuilder
+      .speak(`Is it ${guess}? Nope, too low! Guess again.`)
+      .reprompt(`${guess} was too low, what's your next guess?`)
+      .getResponse();
   } else if (guess > state.Target) {
-    return {
-      state: nextGuess(state),
-      response: responseBuilder
-        .speak(`Is it ${guess}? Nope, too high! Guess again.`)
-        .reprompt(`${guess} was too high, what's your next guess?`)
-        .getResponse()
-    };
+    setState(handlerInput, nextGuess(state));
+    return responseBuilder
+      .speak(`Is it ${guess}? Nope, too high! Guess again.`)
+      .reprompt(`${guess} was too high, what's your next guess?`)
+      .getResponse();
   } else if (guess === state.Target) {
-    return {
-      state: { Name: "Finished" },
-      response: responseBuilder
-        .speak(
-          `Is it ${guess}? Yes! Congratulations, you guessed it in ${state.Guesses +
-            1} tries. Would you like to play again?`
-        )
-        .withShouldEndSession(false)
-        .getResponse()
-    };
+    setState(handlerInput, { Name: "Finished" });
+    return responseBuilder
+      .speak(
+        `Is it ${guess}? Yes! Congratulations, you guessed it in ${state.Guesses +
+          1} tries. Would you like to play again?`
+      )
+      .withShouldEndSession(false)
+      .getResponse();
   } else {
-    return {
-      state,
-      response: responseBuilder
-        .speak("Sorry, I couldn't tell what number you said.")
-        .reprompt(`Try saying "Is it 50"`)
-        .getResponse()
-    };
+    return responseBuilder
+      .speak("Sorry, I couldn't tell what number you said.")
+      .reprompt(`Try saying "Is it 50"`)
+      .getResponse();
   }
 }
 
@@ -360,6 +371,10 @@ export const handler = Ask.SkillBuilders.custom()
           .request as IntentRequest;
         const state = getState(handlerInput);
         switch (intentRequest.intent.name) {
+          case "GuessIntent":
+            const startedState =
+              state.Name === "Guessing" ? state : startGuessing();
+            return checkGuess(handlerInput, startedState);
           case "AMAZON.YesIntent":
             if (state.Name === "Finished") {
               return startNewGame(handlerInput);
@@ -376,14 +391,8 @@ export const handler = Ask.SkillBuilders.custom()
             return help(handlerInput);
           case "AMAZON.StopIntent":
             return exit(handlerInput);
-          case "GuessIntent":
-            const startedState =
-              state.Name === "Guessing" ? state : startGuessing();
-            const result = checkGuess(handlerInput, startedState);
-            setState(handlerInput, result.state);
-            return result.response;
           default:
-            throw new Error(`Unhandled intent: ${intentRequest.intent.name}`);
+            throw new Error(`Unhandled intent: ${intent.name}`);
         }
       }
     }
@@ -398,30 +407,6 @@ export const handler = Ask.SkillBuilders.custom()
     }
   )
   .lambda();
-```
-
-models.yml
-```yml
-en-GB:
-  interactionModel:
-    languageModel:
-      invocationName: guessing game
-      intents:
-        - name: AMAZON.YesIntent
-        - name: AMAZON.NoIntent
-        - name: AMAZON.HelpIntent
-        - name: AMAZON.StopIntent
-        - name: GuessIntent
-          slots:
-            - name: Guess
-              type: AMAZON.NUMBER
-          samples:
-            - 'I guess {Guess}'
-            - 'is it {Guess}'
-            - 'what about {Guess}'
-            - 'my guess is {Guess}'
-            - 'if the number is {Guess}'
-            - '{Guess}'
 ```
 
 skill.yml
